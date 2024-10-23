@@ -21,7 +21,7 @@ const getAllProduct = async (req, res) => {
     // Calculate the number of documents to skip
     const skip = (page - 1) * limit;
 
-    // Fetch the products with pagination
+    // Fetch the products with pagination (no field is excluded)
     const products = await Product.find()
       .skip(skip) // Skip the documents for previous pages
       .limit(limit); // Limit the number of documents returned
@@ -40,6 +40,7 @@ const getAllProduct = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 module.exports = {

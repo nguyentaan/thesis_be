@@ -8,7 +8,15 @@ const productSchema = new Schema({
   price: { type: String, required: true },
   color: { type: String, required: true },
   sku: { type: String, required: true },
-  description: { type: [String], required: true },
+  description: {
+    type: [
+      {
+        title: String,
+        content: String,
+      },
+    ],
+    required: true,
+  },
   images: { type: [String], required: true },
 });
 
