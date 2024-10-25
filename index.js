@@ -1,22 +1,28 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const app = express();
-const port = 3001;
 const cors = require("cors");
 const { default: mongoose } = require("mongoose");
 const multer = require("multer");
-const productController = require("./controllers/productController");
+const cookieParser = require("cookie-parser");
+const routes = require("./routes");
+const dotenv = require("dotenv");
+dotenv.config();
 
-require("dotenv").config();
-
+const app = express();
+const port = process.env.PORT || 3001;
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+  origin: '*', 
+  credentials: true, 
+}));
+
+app.use(cookieParser());
+app.use("/api", routes);
 
 mongoose.set("strictQuery", true);
-
 mongoose
   .connect(
-    process.env.MONGODB_URI,
+    process.env.MONGO_DB,
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => console.log("Connected to MongoDB..."))
@@ -24,9 +30,6 @@ mongoose
     console.error("Could not connect to MongoDB:", err);
   });
 
-// app.get("/api/products/:id", productController.getProductById);
-app.get("/api/products", productController.getAllProduct);
-
 app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+  console.log("Server is running in port: ", +port);
 });
