@@ -6,6 +6,8 @@ const multer = require("multer");
 const cookieParser = require("cookie-parser");
 const routes = require("./routes");
 const dotenv = require("dotenv");
+const AuthenticateRouter = require("./routes/authenticate");
+const ProductRouter = require("./routes/product");
 dotenv.config();
 
 const app = express();
@@ -19,7 +21,9 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use("/api", routes);
+// app.use("/api",routes);
+app.use("/api/auth", AuthenticateRouter);
+app.use("/api/products", ProductRouter);
 // routes(app);
 
 mongoose.set("strictQuery", true);
