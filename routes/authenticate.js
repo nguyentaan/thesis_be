@@ -6,7 +6,7 @@ const authController4 = require("../controllers/auth/refresh_token");
 
 const {
     authUserMiddleWare,
-} = require("../middleware/checkToken,js");
+} = require("../middleware/checkToken.js");
 
 
 router.post(
@@ -18,6 +18,11 @@ router.post(
     "/register",
     authController2.CreateUser
 );
+
+router.post(
+    "/google",
+    authController1.GoogleSignIn
+)
 
 router.post(
     "/refresh-token",

@@ -1,4 +1,6 @@
 const AuthService = require("../../services/auth/login");
+const admin = require("../../services/auth/firebaseAdmin");
+const User = require("../../models/user");
 
 const Login = async (req, res, next) => {
   try {
@@ -45,6 +47,39 @@ const Login = async (req, res, next) => {
   }
 };
 
+const google_Signin = async (req,res,next) => {
+  const {token} = req.body;
+  try{
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const {email,name,picture} = decodedToken;
+    let user = await User.findOne({email});
+
+    if(!user){
+      user = await User.create({
+        name,
+        email,
+        password:"",
+        avatar: picture,
+      });
+      await user.save();
+    }
+    res.status(200).json({
+      status: "OK",
+      message: "Login successfully",
+      data: user,
+    });
+  } catch(error){
+    // console.error('Error logging:', error);
+    // console.error('Stack trace:', error.stack);
+
+    return res.status(404).json({
+      message: error,
+      details: error.message,
+    });
+  }
+}
+
 module.exports = {
   Login: Login,
+  GoogleSignIn: google_Signin,
 };

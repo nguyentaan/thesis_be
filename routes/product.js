@@ -4,7 +4,7 @@ const productController = require("../controllers/product/productController");
 
 const {
     authCheckToken,
-} = require("../middleware/checkToken,js");
+} = require("../middleware/checkToken.js");
 
 router.get(
     "/",
