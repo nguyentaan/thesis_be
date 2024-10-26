@@ -21,9 +21,9 @@ app.use(
 );
 
 app.use(cookieParser());
-// app.use("/api",routes);
-app.use("/api/auth", AuthenticateRouter);
-app.use("/api/products", ProductRouter);
+app.use("/api", routes);
+// app.use("/api/auth", AuthenticateRouter);
+// app.use("/api/products", ProductRouter);
 // routes(app);
 
 mongoose.set("strictQuery", true);
