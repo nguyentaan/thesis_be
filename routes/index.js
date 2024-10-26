@@ -1,18 +1,12 @@
-// const UserRouter = require("./user");
+const express = require("express");
+
 const AuthenticateRouter = require("./authenticate");
 const ProductRouter = require("./product");
 
-// const DocumentRouter = require("./document");
-// const DocumentTypeRouter = require("./document_type");
-// const KnowledgeBaseRouter = require("./knowledge_base");
+const router = express.Router();
 
-const routes = (app) => {
-//   app.use("/user", UserRouter);
-  app.use("/auth", AuthenticateRouter);
-  app.use("/products", ProductRouter);
-//   app.use("/knowledge_base", KnowledgeBaseRouter);
-//   app.use("/document", DocumentRouter);
-//   app.use("/document_type", DocumentTypeRouter);
-};
+// Register routers
+router.use("/auth", AuthenticateRouter);
+router.use("/products", ProductRouter);
 
-module.exports = routes;
+module.exports = router;
