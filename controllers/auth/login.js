@@ -1,8 +1,13 @@
 const AuthService = require("../../services/auth/login");
-const admin = require("../../services/auth/firebaseAdmin");
 const User = require("../../models/user");
 const OTPService = require("../../services/otp");
 const nodemailer = require("nodemailer");
+const {OAuth2Client} = require('google-auth-library');
+
+CLIENT_ID =
+  "949928109687-ualg36c3l1v73dtqmudotboi79f7pvds.apps.googleusercontent.com";
+// CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const client = new OAuth2Client(CLIENT_ID);
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
@@ -11,6 +16,8 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
+
+
 
 const Login = async (req, res) => {
   try {
@@ -110,10 +117,13 @@ const verifyOTP = async (req, res) => {
 };
 
 const google_Signing = async (req, res) => {
-  const { token } = req.body;
+  const {credential} = req.body;
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    const { email, name, picture } = decodedToken;
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: CLIENT_ID,
+    })
+    const { name, email, picture } = ticket.getPayload();
     let user = await User.findOne({ email });
 
     if (!user) {
