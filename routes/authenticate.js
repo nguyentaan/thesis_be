@@ -12,7 +12,7 @@ router.post("/register", authController2.CreateUser);
 
 router.post("/google", authController1.GoogleSignIn);
 
-router.post("/verify-otp", authController1.VerifyOTP);
+router.post("/verify-otp", authController1.VerifyOTP);      
 
 router.post("/refresh-token", authController4.NewRefreshToken);
 
