@@ -6,25 +6,35 @@ const multer = require("multer");
 const cookieParser = require("cookie-parser");
 const routes = require("./routes");
 const dotenv = require("dotenv");
+const AuthenticateRouter = require("./routes/authenticate");
+const ProductRouter = require("./routes/product");
+const CartRouter = require("./routes/cartRoutes");
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
-app.use(bodyParser.json());
-app.use(cors({
-  origin: '*', 
-  credentials: true, 
-}));
+// app.use(bodyParser.json());
+app.use(express.json());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 
 app.use(cookieParser());
-app.use("/api", routes);
+// app.use("/api", routes);
+app.use("/api/auth", AuthenticateRouter);
+app.use("/api/products", ProductRouter);
+app.use("/api/cart", CartRouter);
+// routes(app);
 
 mongoose.set("strictQuery", true);
 mongoose
-  .connect(
-    process.env.MONGO_DB,
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("Connected to MongoDB..."))
   .catch((err) => {
     console.error("Could not connect to MongoDB:", err);
