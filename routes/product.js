@@ -4,11 +4,10 @@ const productController = require("../controllers/product/productController");
 
 const {
     authCheckToken,
-} = require("../middleware/checkToken,js");
+} = require("../middleware/checkToken.js");
 
 router.get(
     "/",
-    authCheckToken,
     productController.getAllProduct
 );
 
@@ -17,4 +16,6 @@ router.get(
     authCheckToken,
     productController.getProductById
 );
+
+module.exports = router;
 
