@@ -9,6 +9,7 @@ const dotenv = require("dotenv");
 const AuthenticateRouter = require("./routes/authenticate");
 const ProductRouter = require("./routes/product");
 const CartRouter = require("./routes/cartRoutes");
+const OrderRouter = require("./routes/orderRoutes");
 dotenv.config();
 
 const app = express();
@@ -27,6 +28,7 @@ app.use(cookieParser());
 app.use("/api/auth", AuthenticateRouter);
 app.use("/api/products", ProductRouter);
 app.use("/api/cart", CartRouter);
+app.use("/api/order", OrderRouter);
 // routes(app);
 
 mongoose.set("strictQuery", true);
