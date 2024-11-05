@@ -1,7 +1,7 @@
 // services/auth/otpService.js
 const NodeCache = require("node-cache");
 
-const otpCache = new NodeCache({ stdTTL: 300 });
+const otpCache = new NodeCache({ stdTTL: 500 });
 
 const MAX_ATTEMPTS = 5;
 

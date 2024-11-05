@@ -8,10 +8,13 @@ const routes = require("./routes");
 const dotenv = require("dotenv");
 const AuthenticateRouter = require("./routes/authenticate");
 const ProductRouter = require("./routes/product");
+const CartRouter = require("./routes/cartRoutes");
+const OrderRouter = require("./routes/orderRoutes");
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
+
 app.use(bodyParser.json());
 app.use(
   cors({
@@ -21,9 +24,13 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use("/api", routes);
-// app.use("/api/auth", AuthenticateRouter);
-// app.use("/api/products", ProductRouter);
+// app.use("/api", routes);
+app.use("/api/auth", AuthenticateRouter);
+app.use("/api/products", ProductRouter);
+app.use("/api/cart", CartRouter);
+app.use("/api/order", OrderRouter);
+//app.use("/api", routes);
+
 // routes(app);
 
 mongoose.set("strictQuery", true);

@@ -1,13 +1,12 @@
-const AuthService = require("../../services/auth/login");
 const User = require("../../models/user");
+const AuthService = require("../../services/auth/login");
+
 const OTPService = require("../../services/otp");
 const nodemailer = require("nodemailer");
 const {OAuth2Client} = require('google-auth-library');
-
-CLIENT_ID =
-  "949928109687-ualg36c3l1v73dtqmudotboi79f7pvds.apps.googleusercontent.com";
-// CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
+const bcrypt = require("bcrypt");
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
@@ -16,8 +15,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-
-
 
 const Login = async (req, res) => {
   try {
@@ -44,8 +41,14 @@ const Login = async (req, res) => {
         message: "User not found. Please register first.",
       });
     }
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+    if (!isPasswordValid) {
+        return res.status(401).json({
+            status: "ERR",
+            message: "The password or user is incorrect",
+        });
+    }
 
-    // Generate OTP and send via email
     const otp = OTPService.generateOTP();
     OTPService.storeOTP(email, otp);
 
@@ -71,10 +74,12 @@ const Login = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
   const { email, password, otp } = req.body;
+  console.log("email: " + email);
+  console.log("password: " + password);
+  console.log("otp: " + otp);
+
   try {
-    console.log("Run verification");
-    
-    // Verify the OTP using the OTPService
+        // Verify the OTP using the OTPService
     const { success, message } = await OTPService.verifyOTP(email, otp);
     
     // Check if OTP verification was successful
@@ -84,14 +89,9 @@ const verifyOTP = async (req, res) => {
         message: message,
       });
     }
-
-    console.log("Run Login");
-    
     // Proceed with the login process
     const response = await AuthService.loginUser({ email, password });
     const { refresh_token, ...newResponse } = response;
-
-    console.log("Run Return Tokens");
     
     // Set the refresh token in the cookie
     res.cookie("refresh_token", refresh_token, {
@@ -100,6 +100,9 @@ const verifyOTP = async (req, res) => {
       sameSite: "strict",
       path: "/",
     });
+
+    console.log("response: ", newResponse);
+    console.log("response: ", refresh_token);
 
     // Return the response with user data and refresh token
     return res.status(200).json({
@@ -149,8 +152,40 @@ const google_Signing = async (req, res) => {
   }
 };
 
+const google_signin = async (req, res) => {
+  const { credential } = req.body;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: CLIENT_ID,
+    });
+    const { name, email, picture } = ticket.getPayload();
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        password: "",
+        avatar: picture,
+      });
+      await user.save();
+    }
+    res.status(200).json({
+      status: "OK",
+      message: "Login successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error logging in with Google:", error);
+    return res.status(500).json({
+      status: "ERR",
+      message: "An error occurred during Google sign-in",
+    });
+  }
+};
+
 module.exports = {
   Login: Login,
-  GoogleSignIn: google_Signing,
+  GoogleSignIn: google_signin,
   VerifyOTP: verifyOTP,
 };
