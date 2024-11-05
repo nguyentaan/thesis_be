@@ -8,9 +8,9 @@ const { authUserMiddleWare } = require("../middleware/checkToken.js");
 
 router.post("/login", authController1.Login);
 
-router.post("/register", authController2.CreateUser);
+router.post("/google-signin", authController1.GoogleSignIn);
 
-router.post("/google", authController1.GoogleSignIn);
+router.post("/register", authController2.CreateUser);
 
 router.post("/verify-otp", authController1.VerifyOTP);      
 
