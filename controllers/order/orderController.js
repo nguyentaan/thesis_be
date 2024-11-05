@@ -41,6 +41,43 @@ const createOrderFromCart = async (req, res) => {
     });
 
     await order.save();
+
+    // Update product quantities in stock
+    for (const item of orderItems) {
+      const product = await Product.findById(item.productId);
+
+      if (product) {
+        // Find the size within the product's sizes array
+        const productSize = product.sizes.find(
+          (size) => size.size_name === item.size
+        );
+
+        if (productSize) {
+          // Decrease stock by the quantity ordered
+          productSize.stock -= item.quantity;
+
+          // Prevent stock from going negative
+          if (productSize.stock < 0) {
+            return res.status(400).json({
+              message: `Not enough stock for size ${item.size} of product ${product.name}.`,
+            });
+          }
+        } else {
+          return res.status(400).json({
+            message: `Size ${item.size} not found for product ${product.name}.`,
+          });
+        }
+
+        // Save the updated product
+        await product.save();
+      } else {
+        return res
+          .status(404)
+          .json({ message: `Product with ID ${item.productId} not found.` });
+      }
+    }
+
+    // Clear the user's cart after the order is created
     await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
 
     res.status(201).json({ message: "Order created successfully", order });
