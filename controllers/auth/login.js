@@ -1,18 +1,12 @@
 const User = require("../../models/user");
 const AuthService = require("../../services/auth/login");
 
-const User = require("../../models/user");
 const OTPService = require("../../services/otp");
 const nodemailer = require("nodemailer");
 const {OAuth2Client} = require('google-auth-library');
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
 const bcrypt = require("bcrypt");
-
-CLIENT_ID =
-  "949928109687-ualg36c3l1v73dtqmudotboi79f7pvds.apps.googleusercontent.com";
-// CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const client = new OAuth2Client(CLIENT_ID);
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
