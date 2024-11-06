@@ -12,6 +12,8 @@ router.post("/google-signin", authController1.GoogleSignIn);
 
 router.post("/register", authController2.CreateUser);
 
+router.post("/verify-otp", authController1.VerifyOTP);      
+
 router.post("/refresh-token", authController4.NewRefreshToken);
 
-module.exports = router;
+module.exports = router; // Change this line to use CommonJS syntax

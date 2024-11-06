@@ -1,14 +1,15 @@
-// const UserRouter = require("./user");
+const express = require("express");
+
 const AuthenticateRouter = require("./authenticate");
 const ProductRouter = require("./product");
 const OrderRouter = require('./orderRoutes');
+const UserRouter = require("./user");
 
-// const DocumentRouter = require("./document");
-// const DocumentTypeRouter = require("./document_type");
-// const KnowledgeBaseRouter = require("./knowledge_base");
+
+const router = express.Router();
 
 const routes = (app) => {
-//   app.use("/user", UserRouter);
+  app.use("/users", UserRouter);
   app.use("/auth", AuthenticateRouter);
   app.use("/products", ProductRouter);
   app.use("/orders", OrderRouter);
@@ -17,4 +18,4 @@ const routes = (app) => {
 //   app.use("/document_type", DocumentTypeRouter);
 };
 
-module.exports = routes;
+module.exports = router;
