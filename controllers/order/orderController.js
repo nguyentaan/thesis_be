@@ -48,7 +48,7 @@ const createOrderFromCart = async (req, res) => {
     });
 
     const totalAmount = orderItems.reduce((total, item) => {
-      return total + item.price * item.quantity;
+      return total + item.price * item.quantity + 5;
     }, 0);
 
     const order = new Order({
@@ -109,7 +109,6 @@ const createOrderFromCart = async (req, res) => {
       .json({ message: "Failed to create order", error: error.message });
   }
 };
-
 
 const getOrdersByUserId = async (req, res) => {
   try {
