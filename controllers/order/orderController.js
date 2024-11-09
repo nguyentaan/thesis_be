@@ -128,4 +128,56 @@ const getOrdersByUserId = async (req, res) => {
   }
 };
 
-module.exports = { createOrderFromCart, getOrdersByUserId };
+const cancelOrder = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const orderId = req.params.orderId;
+
+    const order = await Order.findOne({ userId, _id: orderId });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    //Check if the order is already processed or cannot be cancelled
+    if (order.status === "processed" || order.status === "shipped") {
+      return res.status(400).json({
+        message: "Order is already processed and cannot be cancelled",
+      });
+    }
+
+    //Restore the stock for each item in the order
+    for (const item of order.items) {
+      const product = await Product.findById(item.productId);
+
+      if (!product) {
+        throw new Error("Product not found during stock restoration");
+      }
+
+      const productSize = product.sizes.find(
+        (size) =>
+          size.size_name.trim().toLowerCase() === item.size.trim().toLowerCase()
+      );
+
+      if (productSize) {
+        productSize.stock += item.quantity;
+
+        //Log the stock after restoration for debugging
+        console.log(
+          `After Restoration: ${productSize.size_name} - Stock: ${productSize.stock}`
+        );
+        await product.save();
+      }
+    }
+    order.status = "cancelled";
+    await order.save();
+    res.status(200).json({ message: "Order cancelled successfully", order });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Failed to cancel order", error: error.message });
+  }
+};
+
+module.exports = { createOrderFromCart, getOrdersByUserId, cancelOrder };
