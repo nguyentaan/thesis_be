@@ -8,8 +8,8 @@ const createOrderFromCart = async (req, res) => {
     const cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",
       populate: {
-        path: "sizes", // Populate the sizes array in the Product model
-        select: "size_name stock", // Ensure that only size_name and stock are selected
+        path: "sizes",
+        select: "size_name stock",
       },
     });
 
@@ -17,17 +17,15 @@ const createOrderFromCart = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty or not found" });
     }
 
-    // Clean and parse `price`, ensuring it only includes numeric values
+    // Process each item in the cart
     const orderItems = cart.items.map((item) => {
       const rawPrice = item.productId.price;
       const price = parseFloat(rawPrice.replace(/[^\d.]/g, ""));
 
       if (isNaN(price)) throw new Error("Invalid price format");
 
-      // Normalize size to ensure correct comparison (case-insensitive)
       const normalizedSize = item.size.trim().toLowerCase();
 
-      // Find matching size for the product
       const productSize = item.productId.sizes?.find(
         (size) => size.size_name.trim().toLowerCase() === normalizedSize
       );
@@ -47,9 +45,13 @@ const createOrderFromCart = async (req, res) => {
       };
     });
 
-    const totalAmount = orderItems.reduce((total, item) => {
-      return total + item.price * item.quantity + 5;
+    // Calculate total amount for items and add a $5 shipping fee
+    const itemsTotal = orderItems.reduce((total, item) => {
+      return total + item.price * item.quantity;
     }, 0);
+
+    const shippingFee = 5;
+    const totalAmount = itemsTotal + shippingFee;
 
     const order = new Order({
       userId,
@@ -86,15 +88,12 @@ const createOrderFromCart = async (req, res) => {
         throw new Error(`Not enough stock for size ${item.size}`);
       }
 
-      // Deduct stock from the product size
       productSize.stock -= item.quantity;
 
-      // Log the stock after deduction for debugging
       console.log(
         `After Deduction: ${productSize.size_name} - Stock: ${productSize.stock}`
       );
 
-      // Save the product after deducting the stock
       await product.save();
     }
 
