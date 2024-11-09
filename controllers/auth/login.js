@@ -1,15 +1,18 @@
 const User = require("../../models/user");
 const AuthService = require("../../services/auth/login");
-
+const {
+  GenerateAccessToken,
+  GenerateRefreshToken,
+} = require("../../services/jwt");
 const OTPService = require("../../services/otp");
 const nodemailer = require("nodemailer");
-const {OAuth2Client} = require('google-auth-library');
+const { OAuth2Client } = require("google-auth-library");
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(CLIENT_ID);
 const bcrypt = require("bcrypt");
 
 const transporter = nodemailer.createTransport({
-  service: 'Gmail',
+  service: "Gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -43,10 +46,10 @@ const Login = async (req, res) => {
     }
     const isPasswordValid = bcrypt.compareSync(password, user.password);
     if (!isPasswordValid) {
-        return res.status(401).json({
-            status: "ERR",
-            message: "The password or user is incorrect",
-        });
+      return res.status(401).json({
+        status: "ERR",
+        message: "The password or user is incorrect",
+      });
     }
 
     const otp = OTPService.generateOTP();
@@ -64,7 +67,7 @@ const Login = async (req, res) => {
       message: "OTP sent to email. Please verify to complete login.",
     });
   } catch (e) {
-    console.error('Error logging in:', e);
+    console.error("Error logging in:", e);
     return res.status(500).json({
       status: "ERR",
       message: "An error occurred during login",
@@ -79,9 +82,9 @@ const verifyOTP = async (req, res) => {
   console.log("otp: " + otp);
 
   try {
-        // Verify the OTP using the OTPService
+    // Verify the OTP using the OTPService
     const { success, message } = await OTPService.verifyOTP(email, otp);
-    
+
     // Check if OTP verification was successful
     if (!success) {
       return res.status(401).json({
@@ -92,7 +95,7 @@ const verifyOTP = async (req, res) => {
     // Proceed with the login process
     const response = await AuthService.loginUser({ email, password });
     const { refresh_token, ...newResponse } = response;
-    
+
     // Set the refresh token in the cookie
     res.cookie("refresh_token", refresh_token, {
       httpOnly: true,
@@ -109,45 +112,11 @@ const verifyOTP = async (req, res) => {
       ...newResponse,
       refresh_token,
     });
-
   } catch (e) {
-    console.error('Error verifying OTP:', e);
+    console.error("Error verifying OTP:", e);
     return res.status(500).json({
       status: "ERR",
       message: "An error occurred during OTP verification",
-    });
-  }
-};
-
-const google_Signing = async (req, res) => {
-  const {credential} = req.body;
-  try {
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: CLIENT_ID,
-    })
-    const { name, email, picture } = ticket.getPayload();
-    let user = await User.findOne({ email });
-
-    if (!user) {
-      user = await User.create({
-        name,
-        email,
-        password: "",
-        avatar: picture,
-      });
-      await user.save();
-    }
-    res.status(200).json({
-      status: "OK",
-      message: "Login successfully",
-      data: user,
-    });
-  } catch (error) {
-    console.error('Error logging in with Google:', error);
-    return res.status(500).json({
-      status: "ERR",
-      message: "An error occurred during Google sign-in",
     });
   }
 };
@@ -170,10 +139,23 @@ const google_signin = async (req, res) => {
       });
       await user.save();
     }
+
+    // Generate access and refresh tokens
+    const access_token = await GenerateAccessToken({
+      userId: user._id,
+      user: user,
+    });
+    const refresh_token = await GenerateRefreshToken({
+      userId: user._id,
+      user: user,
+    });
     res.status(200).json({
       status: "OK",
       message: "Login successfully",
-      data: user,
+      data: {
+        access_token,
+        refresh_token,
+      },
     });
   } catch (error) {
     console.error("Error logging in with Google:", error);
