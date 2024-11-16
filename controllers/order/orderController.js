@@ -65,7 +65,7 @@ const createOrderFromCart = async (req, res) => {
 
     await order.save();
 
-    // Deduct stock for each item in the order
+    // Deduct stock and increase total_sold for each item in the order
     for (const item of orderItems) {
       const product = await Product.findById(item.productId);
 
@@ -88,10 +88,14 @@ const createOrderFromCart = async (req, res) => {
         throw new Error(`Not enough stock for size ${item.size}`);
       }
 
+      // Deduct stock
       productSize.stock -= item.quantity;
 
+      // Increment total_sold for the product
+      product.total_sold += item.quantity;
+
       console.log(
-        `After Deduction: ${productSize.size_name} - Stock: ${productSize.stock}`
+        `After Deduction: ${productSize.size_name} - Stock: ${productSize.stock}, Total Sold: ${product.total_sold}`
       );
 
       await product.save();

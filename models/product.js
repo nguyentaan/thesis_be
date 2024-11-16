@@ -23,6 +23,12 @@ const productSchema = new Schema({
     required: true,
   },
   images: { type: [String], required: true },
+  sold_count: { type: Number, default: 0 }, // Number of items sold
+  review_count: { type: Number, default: 0 }, // Number of reviews for this product
+  rating_count: { type: Number, default: 0 }, // Number of ratings given (e.g., count of reviews with ratings)
+  avg_rating: { type: Number, default: 0 },
+  total_rating: { type: Number, default: 0 }, // Sum of all ratings
+  reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }], // Reference to reviews
 });
 
 // Create the model
