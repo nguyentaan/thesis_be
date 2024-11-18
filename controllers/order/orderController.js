@@ -8,8 +8,8 @@ const createOrderFromCart = async (req, res) => {
     const cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",
       populate: {
-        path: "sizes", // Populate the sizes array in the Product model
-        select: "size_name stock", // Ensure that only size_name and stock are selected
+        path: "sizes",
+        select: "size_name stock",
       },
     });
 
@@ -17,17 +17,15 @@ const createOrderFromCart = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty or not found" });
     }
 
-    // Clean and parse `price`, ensuring it only includes numeric values
+    // Process each item in the cart
     const orderItems = cart.items.map((item) => {
       const rawPrice = item.productId.price;
       const price = parseFloat(rawPrice.replace(/[^\d.]/g, ""));
 
       if (isNaN(price)) throw new Error("Invalid price format");
 
-      // Normalize size to ensure correct comparison (case-insensitive)
       const normalizedSize = item.size.trim().toLowerCase();
 
-      // Find matching size for the product
       const productSize = item.productId.sizes?.find(
         (size) => size.size_name.trim().toLowerCase() === normalizedSize
       );
@@ -47,9 +45,13 @@ const createOrderFromCart = async (req, res) => {
       };
     });
 
-    const totalAmount = orderItems.reduce((total, item) => {
+    // Calculate total amount for items and add a $5 shipping fee
+    const itemsTotal = orderItems.reduce((total, item) => {
       return total + item.price * item.quantity;
     }, 0);
+
+    const shippingFee = 5;
+    const totalAmount = itemsTotal + shippingFee;
 
     const order = new Order({
       userId,
@@ -63,7 +65,7 @@ const createOrderFromCart = async (req, res) => {
 
     await order.save();
 
-    // Deduct stock for each item in the order
+    // Deduct stock and increase total_sold for each item in the order
     for (const item of orderItems) {
       const product = await Product.findById(item.productId);
 
@@ -86,15 +88,16 @@ const createOrderFromCart = async (req, res) => {
         throw new Error(`Not enough stock for size ${item.size}`);
       }
 
-      // Deduct stock from the product size
+      // Deduct stock
       productSize.stock -= item.quantity;
 
-      // Log the stock after deduction for debugging
+      // Increment total_sold for the product
+      product.total_sold += item.quantity;
+
       console.log(
-        `After Deduction: ${productSize.size_name} - Stock: ${productSize.stock}`
+        `After Deduction: ${productSize.size_name} - Stock: ${productSize.stock}, Total Sold: ${product.total_sold}`
       );
 
-      // Save the product after deducting the stock
       await product.save();
     }
 
@@ -109,7 +112,6 @@ const createOrderFromCart = async (req, res) => {
       .json({ message: "Failed to create order", error: error.message });
   }
 };
-
 
 const getOrdersByUserId = async (req, res) => {
   try {
@@ -129,4 +131,56 @@ const getOrdersByUserId = async (req, res) => {
   }
 };
 
-module.exports = { createOrderFromCart, getOrdersByUserId };
+const cancelOrder = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const orderId = req.params.orderId;
+
+    const order = await Order.findOne({ userId, _id: orderId });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    //Check if the order is already processed or cannot be cancelled
+    if (order.status === "processed" || order.status === "shipped") {
+      return res.status(400).json({
+        message: "Order is already processed and cannot be cancelled",
+      });
+    }
+
+    //Restore the stock for each item in the order
+    for (const item of order.items) {
+      const product = await Product.findById(item.productId);
+
+      if (!product) {
+        throw new Error("Product not found during stock restoration");
+      }
+
+      const productSize = product.sizes.find(
+        (size) =>
+          size.size_name.trim().toLowerCase() === item.size.trim().toLowerCase()
+      );
+
+      if (productSize) {
+        productSize.stock += item.quantity;
+
+        //Log the stock after restoration for debugging
+        console.log(
+          `After Restoration: ${productSize.size_name} - Stock: ${productSize.stock}`
+        );
+        await product.save();
+      }
+    }
+    order.status = "cancelled";
+    await order.save();
+    res.status(200).json({ message: "Order cancelled successfully", order });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Failed to cancel order", error: error.message });
+  }
+};
+
+module.exports = { createOrderFromCart, getOrdersByUserId, cancelOrder };
