@@ -77,9 +77,6 @@ const Login = async (req, res) => {
 
 const verifyOTP = async (req, res) => {
   const { email, password, otp } = req.body;
-  console.log("email: " + email);
-  console.log("password: " + password);
-  console.log("otp: " + otp);
 
   try {
     // Verify the OTP using the OTPService
