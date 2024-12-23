@@ -2,12 +2,12 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const authUserMiddleWare = (req, res, next) => {
+const authUserMiddleware = (req, res, next) => {
   const tokenHeader = req.headers.authorization;
 
   if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
     return res.status(401).json({
-      message: "Authentication failed",
+      message: "Authentication failed: Missing or invalid token",
       status: "ERROR",
     });
   }
@@ -15,40 +15,51 @@ const authUserMiddleWare = (req, res, next) => {
   // Extract the token
   const token = tokenHeader.split(" ")[1];
 
-  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, user) {
+  jwt.verify(token, process.env.REFRESH_TOKEN, (err, user) => {
     if (err) {
       return res.status(401).json({
-        message: "Authentication failed",
+        message: "Authentication failed: Token verification failed",
         status: "ERROR",
       });
     }
-    if (user?.isAdmin) {
+
+    if (user?.isAdmin === true || user?.isAdmin === false) {
       next();
     } else {
       return res.status(403).json({
-        message: "Unauthorized",
+        message: "Unauthorized: Insufficient permissions",
         status: "ERROR",
       });
     }
   });
 };
 
-//check if the user is admin
-const authAdminMiddleWare = (req, res, next) => {
-  const token = req.headers.authorization.split(" ")[1];
-  const userId = req.params.id;
-  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, user) {
+const authAdminMiddleware = (req, res, next) => {
+  const tokenHeader = req.headers.authorization;
+
+  if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      message: "Authentication failed: Missing or invalid token",
+      status: "ERROR",
+    });
+  }
+
+  // Extract the token
+  const token = tokenHeader.split(" ")[1];
+
+  jwt.verify(token, process.env.REFRESH_TOKEN, (err, user) => {
     if (err) {
-      return res.status(404).json({
-        message: "The authemtication",
+      return res.status(401).json({
+        message: "Authentication failed: Token verification failed",
         status: "ERROR",
       });
     }
-    if (user?.isAdmin || user?.id === userId) {
+
+    if (user?.isAdmin === true) {
       next();
     } else {
-      return res.status(404).json({
-        message: "The authemtication",
+      return res.status(403).json({
+        message: "Unauthorized: Admin access only",
         status: "ERROR",
       });
     }
@@ -56,6 +67,6 @@ const authAdminMiddleWare = (req, res, next) => {
 };
 
 module.exports = {
-  authUserMiddleWare,
-  authAdminMiddleWare,
+  authUserMiddleware,
+  authAdminMiddleware,
 };

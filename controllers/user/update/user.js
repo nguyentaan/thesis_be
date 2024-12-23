@@ -1,4 +1,4 @@
-const User = require("../../models/user");
+const User = require("../../../models/user");
 
 const UpdateSearchHistory = async (req, res) => {
   try {
@@ -162,8 +162,54 @@ const ClearAllSearchHistory = async (req, res) => {
   }
 };
 
+const UpdateUserProfile = async (req, res) => {
+  try {
+    const { user_id, update_data } = req.body;
+
+    let user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({
+        status: "ERR",
+        message: "User not found",
+      });
+    }
+
+    // Only update fields that are provided in the request
+    if (update_data) {
+      Object.keys(update_data).forEach((key) => {
+        if (update_data[key] !== null && update_data[key] !== "") {
+          user[key] = update_data[key];
+        }
+      });
+      
+      // Save the updated user profile
+      await user.save();
+    }
+
+    console.log("User updated", user);
+
+    return res.status(200).json({
+      status: "OK",
+      message: "User profile updated successfully",
+      data: user,
+    });
+  } catch (e) {
+    console.error("Error updating user profile:", e);
+    return res.status(500).json({
+      status: "ERR",
+      message: "An error occurred while updating the user profile",
+      details: e.message,
+    });
+  }
+};
+
+
 module.exports = {
   UpdateSearchHistory,
+<<<<<<< HEAD:controllers/user/user.js
   RemoveSearchHistoryItem,
   ClearAllSearchHistory,
+=======
+  UpdateUserProfile
+>>>>>>> main:controllers/user/update/user.js
 };
