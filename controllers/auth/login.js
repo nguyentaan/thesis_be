@@ -137,7 +137,6 @@ const google_signin = async (req, res) => {
       await user.save();
     }
     console.log("User:", user);
-    
     // Generate access and refresh tokens
     const access_token = await GenerateAccessToken({
       userId: user._id,

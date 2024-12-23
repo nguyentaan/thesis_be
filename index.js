@@ -35,6 +35,7 @@ app.use("/api/products", ProductRouter);
 app.use("/api/cart", CartRouter);
 app.use("/api/users", UserRouter);
 app.use("/api/order", OrderRouter);
+app.use("/api/user", UserRouter);
 app.use("/api/review", ReviewRouter);
 //app.use("/api", routes);
 // routes(app);

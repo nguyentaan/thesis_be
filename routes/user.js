@@ -9,7 +9,10 @@ const {
   authAdminMiddleware,
 } = require("../middleware/auth");
 
-router.put("/keyword/add", updateController.UpdateSearchHistory);
+// router.get("/", authCheckToken, productController.getAllProduct);
+router.post("/keyword/add", userController.UpdateSearchHistory);
+router.delete("/keyword/remove", userController.RemoveSearchHistoryItem);
+router.delete("/keyword/remove-all", userController.ClearAllSearchHistory);
 router.put("/profile/update", updateController.UpdateUserProfile);
 
 router.get(
