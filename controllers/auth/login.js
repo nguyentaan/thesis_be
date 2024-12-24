@@ -101,9 +101,6 @@ const verifyOTP = async (req, res) => {
       path: "/",
     });
 
-    console.log("response: ", newResponse);
-    console.log("response: ", refresh_token);
-
     // Return the response with user data and refresh token
     return res.status(200).json({
       ...newResponse,
@@ -163,8 +160,68 @@ const google_signin = async (req, res) => {
   }
 };
 
+const LoginWithoutOTP = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const reg = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    const isCheckEmail = reg.test(email);
+
+    if (!email || !password) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "Email and password are required",
+      });
+    } else if (!isCheckEmail) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "Please provide a valid email",
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        status: "ERR",
+        message: "User not found. Please register first.",
+      });
+    }
+    const isPasswordValid = bcrypt.compareSync(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        status: "ERR",
+        message: "The password or user is incorrect",
+      });
+    }
+
+    const response = await AuthService.loginUser({ email, password });
+    const { refresh_token, ...newResponse } = response;
+
+    // Set the refresh token in the cookie
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: false, // Change to true if using HTTPS
+      sameSite: "strict",
+      path: "/",
+    });
+
+    // Return the response with user data and refresh token
+    return res.status(200).json({
+      ...newResponse,
+      refresh_token,
+    });
+    
+  } catch (e) {
+    console.error("Error logging in:", e);
+    return res.status(500).json({
+      status: "ERR",
+      message: "An error occurred during login",
+    });
+  }
+};
+
 module.exports = {
   Login: Login,
   GoogleSignIn: google_signin,
   VerifyOTP: verifyOTP,
+  LoginWithoutOTP: LoginWithoutOTP,
 };

@@ -7,7 +7,7 @@ dotenv.config();
 const GenerateAccessToken = async (payload) => {
   const access_token = jwt.sign(
     {
-      userId: payload.userId, // Pass userId directly to the JWT payload
+      userId: payload.userId,
       ...payload,
     },
     process.env.ACCESS_TOKEN,
@@ -20,7 +20,7 @@ const GenerateAccessToken = async (payload) => {
 const GenerateRefreshToken = async (payload) => {
   const refresh_token = jwt.sign(
     {
-      userId: payload.userId, // Pass userId directly to the JWT payload
+      userId: payload.userId,
       ...payload,
     },
     process.env.REFRESH_TOKEN,

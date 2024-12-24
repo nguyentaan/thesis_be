@@ -3,6 +3,7 @@ const express = require("express");
 const AuthenticateRouter = require("./authenticate");
 const ProductRouter = require("./product");
 const OrderRouter = require('./orderRoutes');
+const FileRouter = require('./fileUpload');
 const UserRouter = require("./user");
 
 
@@ -13,6 +14,7 @@ const routes = (app) => {
   app.use("/auth", AuthenticateRouter);
   app.use("/products", ProductRouter);
   app.use("/orders", OrderRouter);
+  app.use("/files", FileRouter);
 //   app.use("/knowledge_base", KnowledgeBaseRouter);
 //   app.use("/document", DocumentRouter);
 //   app.use("/document_type", DocumentTypeRouter);

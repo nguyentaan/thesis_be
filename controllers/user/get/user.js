@@ -2,28 +2,12 @@ const User = require("../../../models/user"); // Assuming the User model is impo
 
 const getAllUser = async (req, res) => {
   try {
-    const {
-      name,
-      isAdmin,
-      //  orderListLength
-    } = req.query;
-
-    let filter = {};
-
-    if (name) {
-      filter.name = { $regex: name, $options: "i" };
-    }
-
-    if (typeof isAdmin === "boolean") {
-      filter.isAdmin = isAdmin;
-    }
-
     // if (orderListLength !== undefined) {
     //   filter["$order_lists"] = { $gte: [{ $size: "$order_lists" }, orderListLength] }; 
     // }
 
     // Query the database with the constructed filter
-    const users = await User.find(filter)
+    const users = await User.find()
       .select("-password") // Exclude password from the result
       .populate("order_lists"); // Populate order_lists if they reference another model
 

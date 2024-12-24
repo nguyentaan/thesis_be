@@ -1,4 +1,5 @@
 const Product = require("../../models/product");
+const ProductService = require("../../services/product");
 
 const getProductById = async (req,res) => {
     try {
@@ -41,9 +42,30 @@ const getAllProduct = async (req, res) => {
   }
 };
 
+const saveChunking = async (req, res) => {
+  try {
+    const jsonChunkingData = req.body.chunking_list;
+    const file_name = req.body.file_name;
+    const file_type = req.body.file_type;
+    const results = await ProductService.createFileAndChunkListProduct(jsonChunkingData, file_name[0], file_type);
+    return res.status(200).json({
+      status: "success",
+      message: "Chunking data received successfully",
+      data: results,
+    });
+  } catch (e) {
+    console.error("Error in startChunking:", e);
+    console.error('Stack trace:', e.stack);
+    return res.status(500).json({
+      status: "fail",
+      message: e.message,
+    });
+  }
+};
 
 
 module.exports = {
   getProductById,
   getAllProduct,
+  saveChunking
 };
