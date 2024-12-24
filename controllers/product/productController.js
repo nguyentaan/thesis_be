@@ -24,6 +24,7 @@ const getAllProduct = async (req, res) => {
 
     // Fetch the products with pagination (no field is excluded)
     const products = await Product.find()
+      .select({ "description._id": 0 }) // Exclude `_id` in description
       .skip(skip) // Skip the documents for previous pages
       .limit(limit); // Limit the number of documents returned
 

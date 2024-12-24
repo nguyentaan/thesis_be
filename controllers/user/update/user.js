@@ -4,8 +4,16 @@ const UpdateSearchHistory = async (req, res) => {
   try {
     const { query, user_id } = req.body;
 
-    // Fetch user by ID and update the search history field
-    let user = await User.findById(user_id);
+    // Ensure query and user_id are provided
+    if (!query || !user_id) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "Missing query or user_id in the request body",
+      });
+    }
+
+    // Fetch the user by ID
+    const user = await User.findById(user_id);
     if (!user) {
       return res.status(404).json({
         status: "ERR",
@@ -13,45 +21,143 @@ const UpdateSearchHistory = async (req, res) => {
       });
     }
 
-    // Avoid adding duplicate queries in search history
-    if (!user.search_history.includes(query)) {
-      user.search_history.unshift(query);
+    // Check if the query is already in the search history
+    if (user.search_history.includes(query)) {
+      return res.status(200).json({
+        status: "OK",
+        message: "Query already exists in search history",
+        data: user.search_history,
+      });
+    }
 
-      // Retry logic for version errors
-      let saved = false;
-      while (!saved) {
-        try {
-          await user.save();
-          saved = true;
-        } catch (error) {
-          if (error.name === "VersionError") {
-            console.log("Version conflict detected, retrying...");
-            // Refetch the document to get the latest version
-            user = await User.findById(user_id);
+    // Add the query to the search history (avoid duplicates)
+    user.search_history.unshift(query);
 
-            // Ensure no duplicate entries
-            if (!user.search_history.includes(query)) {
-              user.search_history.unshift(query);
-            }
-          } else {
-            throw error; // Handle other errors separately
+    // Save the updated user, with retry logic in case of version conflicts
+    let saved = false;
+    while (!saved) {
+      try {
+        await user.save();
+        saved = true; // Successfully saved, exit loop
+      } catch (error) {
+        if (error.name === "VersionError") {
+          console.log("Version conflict detected, retrying...");
+          // Refetch the user to get the latest version before retrying
+          user = await User.findById(user_id);
+          if (!user.search_history.includes(query)) {
+            user.search_history.unshift(query);
           }
+        } else {
+          // Throw other errors
+          throw error;
         }
       }
     }
 
-    console.log("User saved", user.search_history);
+    // Respond with success
     return res.status(200).json({
       status: "OK",
       message: "Search history updated successfully",
       data: user.search_history,
     });
-  } catch (e) {
-    console.error("Error updating search history:", e);
+  } catch (error) {
+    console.error("Error updating search history:", error);
     return res.status(500).json({
       status: "ERR",
       message: "An error occurred while updating search history",
-      details: e.message,
+      details: error.message,
+    });
+  }
+};
+
+const RemoveSearchHistoryItem = async (req, res) => {
+  try {
+    const { query, user_id } = req.body;
+
+    // Ensure query and user_id are provided
+    if (!query || !user_id) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "Missing query or user_id in the request body",
+      });
+    }
+
+    // Fetch the user by ID
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({
+        status: "ERR",
+        message: "User not found",
+      });
+    }
+
+    // Remove the query from search history if it exists
+    const index = user.search_history.indexOf(query);
+    if (index !== -1) {
+      user.search_history.splice(index, 1); // Remove the query
+    } else {
+      return res.status(404).json({
+        status: "ERR",
+        message: "Query not found in search history",
+      });
+    }
+
+    // Save the updated user data
+    await user.save();
+
+    return res.status(200).json({
+      status: "OK",
+      message: "Search history item removed successfully",
+      data: user.search_history,
+    });
+  } catch (error) {
+    console.error("Error removing search history item:", error);
+    return res.status(500).json({
+      status: "ERR",
+      message: "An error occurred while removing search history item",
+      details: error.message,
+    });
+  }
+};
+
+const ClearAllSearchHistory = async (req, res) => {
+  try {
+    const { user_id } = req.body;
+
+    // Ensure user_id is provided
+    if (!user_id) {
+      return res.status(400).json({
+        status: "ERR",
+        message: "Missing user_id in the request body",
+      });
+    }
+
+    // Fetch the user by ID
+    const user = await User.findById(user_id);
+    if (!user) {
+      return res.status(404).json({
+        status: "ERR",
+        message: "User not found",
+      });
+    }
+
+    // Clear the search history
+    user.search_history = [];
+
+    // Save the updated user data
+    await user.save();
+
+    return res.status(200).json({
+      status: "OK",
+      message: "All search history cleared successfully",
+      data: user.search_history,
+    });
+  } catch (error) {
+    console.error("Error clearing search history:", error);
+    return res.status(500).json({
+      status: "ERR",
+      message: "An error occurred while clearing search history",
+      details: error.message,
     });
   }
 };
@@ -100,5 +206,7 @@ const UpdateUserProfile = async (req, res) => {
 
 module.exports = {
   UpdateSearchHistory,
-  UpdateUserProfile
+  RemoveSearchHistoryItem,
+  ClearAllSearchHistory,
+  UpdateUserProfile,
 };

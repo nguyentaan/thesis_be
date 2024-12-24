@@ -32,7 +32,7 @@ const GenerateRefreshToken = async (payload) => {
   );
 
   await RefreshTokenModel.create({
-    userId: payload.id,
+    userId: payload.userId,
     token: refresh_token,
     expiresAt: expiresAt,
   });
