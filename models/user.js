@@ -10,12 +10,14 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
-  order_lists: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "order",
-    default: [],
-  }, ],
-  
+  order_lists: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Orders", // Match the registered model name
+      default: [],
+    },
+  ],
 });
+
 const User = mongoose.model("User", userSchema);
 module.exports = User;

@@ -4,9 +4,10 @@ const authController1 = require("../controllers/auth/login");
 const authController2 = require("../controllers/auth/register");
 const authController4 = require("../controllers/auth/refresh_token");
 
-const { authUserMiddleWare } = require("../middleware/checkToken.js");
 
 router.post("/login", authController1.Login);
+
+router.post("/normal-login", authController1.LoginWithoutOTP);
 
 router.post("/google-signin", authController1.GoogleSignIn);
 
