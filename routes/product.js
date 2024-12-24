@@ -10,5 +10,10 @@ router.get("/", productController.getAllProduct);
 
 router.get("/:id", authCheckToken, productController.getProductById);
 
+router.post(
+    "/chunking",
+    productController.saveChunking
+);
+
 module.exports = router;
 

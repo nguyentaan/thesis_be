@@ -12,6 +12,7 @@ const CartRouter = require("./routes/cartRoutes");
 const OrderRouter = require("./routes/orderRoutes");
 const UserRouter = require("./routes/user");
 const ReviewRouter = require("./routes/reviewRoutes");
+const FileUploadRouter = require("./routes/fileUpload");
 
 dotenv.config();
 
@@ -37,6 +38,8 @@ app.use("/api/cart", CartRouter);
 app.use("/api/order", OrderRouter);
 app.use("/api/user", UserRouter);
 app.use("/api/review", ReviewRouter);
+app.use("/api/files", FileUploadRouter);
+
 //app.use("/api", routes);
 // routes(app);
 
