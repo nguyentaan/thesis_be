@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const updateController = require("../controllers/user/update/user.js");
 const getController = require("../controllers/user/get/user.js");
-
 // const { authCheckToken } = require("../middleware/checkToken.js");
 const {
   authUserMiddleware,
@@ -10,9 +9,9 @@ const {
 } = require("../middleware/auth");
 
 // router.get("/", authCheckToken, productController.getAllProduct);
-router.post("/keyword/add", userController.UpdateSearchHistory);
-router.delete("/keyword/remove", userController.RemoveSearchHistoryItem);
-router.delete("/keyword/remove-all", userController.ClearAllSearchHistory);
+router.post("/keyword/add", updateController.UpdateSearchHistory);
+router.delete("/keyword/remove", updateController.RemoveSearchHistoryItem);
+router.delete("/keyword/remove-all", updateController.ClearAllSearchHistory);
 router.put("/profile/update", updateController.UpdateUserProfile);
 
 router.get(

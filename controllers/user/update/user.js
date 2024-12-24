@@ -206,10 +206,7 @@ const UpdateUserProfile = async (req, res) => {
 
 module.exports = {
   UpdateSearchHistory,
-<<<<<<< HEAD:controllers/user/user.js
   RemoveSearchHistoryItem,
   ClearAllSearchHistory,
-=======
-  UpdateUserProfile
->>>>>>> main:controllers/user/update/user.js
+  UpdateUserProfile,
 };
