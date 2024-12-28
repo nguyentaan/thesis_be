@@ -3,12 +3,12 @@ const { Schema, model } = mongoose;
 
 const productSchema = new Schema(
   {
-    product_code: { type: Number, required: true, unique: true }, // Unique product identifier
+    product_id: { type: String, required: true }, // Unique product ID
+    product_code: { type: Number, required: true }, // Unique product identifier
     name: { type: String, required: true }, // Product name
     category: { type: String, required: true }, // Product category
     color: { type: String, required: true }, // Product color
-    product_id: { type: String, required: true, unique: true }, // Unique product ID
-    description: { type: String, required: true }, // Product description
+    description: { type: String, default: "" }, // Product description
     index_name: { type: String, required: false }, // Optional index name
     total_stock: { type: Number, required: true }, // Total stock available
     sold_count: { type: Number, default: 0 }, // Number of items sold
@@ -17,12 +17,11 @@ const productSchema = new Schema(
     avg_rating: { type: Number, default: 0 }, // Average product rating
     total_rating: { type: Number, default: 0 }, // Sum of all ratings
     price: { type: Number, required: true }, // Product price
-    image_url: { type: String, required: true }, // Image URL for the product
-    images: { type: [String], default: [] }, // Array of additional image URLs
+    image_url: { type: String, default: "" }, // Image URL for the product
     reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }], // Reference to reviews
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 
