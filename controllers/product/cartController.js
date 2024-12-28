@@ -1,10 +1,19 @@
 const Cart = require("../../models/cart");
+const Product = require("../../models/product");
 
 // Controller to add an item to the cart
 const addToCart = async (req, res) => {
-  const { userId, productId, quantity, size } = req.body;
+  const { userId, productId, quantity, color } = req.body;
 
   try {
+    // Fetch the product price from the product collection
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const price = product.price; // Assuming the product has a price field
+
     // Check if the cart for the user already exists
     let cart = await Cart.findOne({ userId });
 
@@ -12,12 +21,13 @@ const addToCart = async (req, res) => {
     if (!cart) {
       cart = new Cart({
         userId,
-        items: [{ productId, quantity, size }],
+        items: [{ productId, quantity, color, price }],
       });
     } else {
       // If cart exists, check if the item is already in the cart
       const itemIndex = cart.items.findIndex(
-        (item) => item.productId.toString() === productId && item.size === size
+        (item) =>
+          item.productId.toString() === productId && item.color === color
       );
 
       if (itemIndex > -1) {
@@ -25,7 +35,7 @@ const addToCart = async (req, res) => {
         cart.items[itemIndex].quantity += quantity; // Adjust the quantity as needed
       } else {
         // Item doesn't exist in the cart, add a new item
-        cart.items.push({ productId, quantity, size });
+        cart.items.push({ productId, quantity, color, price });
       }
     }
 
@@ -54,7 +64,7 @@ const getCart = async (req, res) => {
 };
 
 const removeItem = async (req, res) => {
-  const { userId, productId, size } = req.body;
+  const { userId, productId, color } = req.body;
 
   try {
     const cart = await Cart.findOne({ userId });
@@ -64,7 +74,7 @@ const removeItem = async (req, res) => {
     }
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId.equals(productId) && item.size === size
+      (item) => item.productId.equals(productId) && item.color === color
     );
 
     if (itemIndex === -1) {
@@ -82,7 +92,7 @@ const removeItem = async (req, res) => {
 };
 
 const increaseQuantity = async (req, res) => {
-  const { userId, productId, size } = req.body;
+  const { userId, productId, color } = req.body;
 
   try {
     const cart = await Cart.findOne({ userId });
@@ -90,7 +100,7 @@ const increaseQuantity = async (req, res) => {
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
     const item = cart.items.find(
-      (item) => item.productId.equals(productId) && item.size === size
+      (item) => item.productId.equals(productId) && item.color === color
     );
 
     if (!item)
@@ -106,7 +116,7 @@ const increaseQuantity = async (req, res) => {
 };
 
 const decreaseQuantity = async (req, res) => {
-  const { userId, productId, size } = req.body;
+  const { userId, productId, color } = req.body;
 
   try {
     const cart = await Cart.findOne({ userId });
@@ -114,7 +124,7 @@ const decreaseQuantity = async (req, res) => {
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
     const itemIndex = cart.items.findIndex(
-      (item) => item.productId.equals(productId) && item.size === size
+      (item) => item.productId.equals(productId) && item.color === color
     );
 
     if (itemIndex === -1)

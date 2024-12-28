@@ -6,7 +6,7 @@ const productController = require("../controllers/product/productController");
 const { authCheckToken } = require("../middleware/checkToken.js");
 
 // router.get("/", authCheckToken, productController.getAllProduct);
-router.get("/", productController.getAllProduct);
+router.get("/", productController.getAllProducts);
 
 router.get("/:id", authCheckToken, productController.getProductById);
 
