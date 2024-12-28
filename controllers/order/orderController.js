@@ -5,13 +5,7 @@ const Product = require("../../models/product");
 const createOrderFromCart = async (req, res) => {
   try {
     const userId = req.params.userId;
-    const cart = await Cart.findOne({ userId }).populate({
-      path: "items.productId",
-      populate: {
-        path: "sizes",
-        select: "size_name stock",
-      },
-    });
+    const cart = await Cart.findOne({ userId }).populate("items.productId");
 
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({ message: "Cart is empty or not found" });
@@ -19,36 +13,35 @@ const createOrderFromCart = async (req, res) => {
 
     // Process each item in the cart
     const orderItems = cart.items.map((item) => {
-      const rawPrice = item.productId.price;
-      const price = parseFloat(rawPrice.replace(/[^\d.]/g, ""));
+      const { price, total_stock, color } = item.productId;
+      const normalizedColor = item.color.trim().toLowerCase();
 
-      if (isNaN(price)) throw new Error("Invalid price format");
-
-      const normalizedSize = item.size.trim().toLowerCase();
-
-      const productSize = item.productId.sizes?.find(
-        (size) => size.size_name.trim().toLowerCase() === normalizedSize
-      );
-
-      if (!productSize) {
+      if (normalizedColor !== color.trim().toLowerCase()) {
         throw new Error(
-          `Size ${item.size} not found for product ${item.productId.name}`
+          `Color ${item.color} does not match available color for product ${item.productId.name}`
+        );
+      }
+
+      if (total_stock < item.quantity) {
+        throw new Error(
+          `Not enough stock for product ${item.productId.name} in color ${item.color}`
         );
       }
 
       return {
         productId: item.productId._id,
         quantity: item.quantity,
-        size: item.size,
+        color: item.color,
         price: price,
-        stock: productSize.stock,
+        total_stock,
       };
     });
 
-    // Calculate total amount for items and add a $5 shipping fee
-    const itemsTotal = orderItems.reduce((total, item) => {
-      return total + item.price * item.quantity;
-    }, 0);
+    // Calculate total amount and add a $5 shipping fee
+    const itemsTotal = orderItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
 
     const shippingFee = 5;
     const totalAmount = itemsTotal + shippingFee;
@@ -65,7 +58,7 @@ const createOrderFromCart = async (req, res) => {
 
     await order.save();
 
-    // Deduct stock and increase total_sold for each item in the order
+    // Deduct stock and increment sold_count for each item
     for (const item of orderItems) {
       const product = await Product.findById(item.productId);
 
@@ -73,35 +66,26 @@ const createOrderFromCart = async (req, res) => {
         throw new Error("Product not found");
       }
 
-      const productSize = product.sizes.find(
-        (size) =>
-          size.size_name.trim().toLowerCase() === item.size.trim().toLowerCase()
-      );
-
-      if (!productSize) {
+      if (product.total_stock < item.quantity) {
         throw new Error(
-          `Size ${item.size} not found for product ${product.name}`
+          `Not enough stock for product ${product.name} in color ${item.color}`
         );
       }
 
-      if (productSize.stock < item.quantity) {
-        throw new Error(`Not enough stock for size ${item.size}`);
-      }
-
       // Deduct stock
-      productSize.stock -= item.quantity;
+      product.total_stock -= item.quantity;
 
-      // Increment total_sold for the product
-      product.total_sold += item.quantity;
+      // Increment sold_count
+      product.sold_count += item.quantity;
 
       console.log(
-        `After Deduction: ${productSize.size_name} - Stock: ${productSize.stock}, Total Sold: ${product.total_sold}`
+        `After Deduction: Product - ${product.name}, Stock: ${product.total_stock}, Sold Count: ${product.sold_count}`
       );
 
       await product.save();
     }
 
-    // Clear the user's cart after the order is created
+    // Clear the user's cart after order creation
     await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
 
     res.status(201).json({ message: "Order created successfully", order });
@@ -142,14 +126,14 @@ const cancelOrder = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    //Check if the order is already processed or cannot be cancelled
+    // Check if the order is already processed or cannot be cancelled
     if (order.status === "processed" || order.status === "shipped") {
       return res.status(400).json({
         message: "Order is already processed and cannot be cancelled",
       });
     }
 
-    //Restore the stock for each item in the order
+    // Restore stock for each item
     for (const item of order.items) {
       const product = await Product.findById(item.productId);
 
@@ -157,23 +141,18 @@ const cancelOrder = async (req, res) => {
         throw new Error("Product not found during stock restoration");
       }
 
-      const productSize = product.sizes.find(
-        (size) =>
-          size.size_name.trim().toLowerCase() === item.size.trim().toLowerCase()
+      product.total_stock += item.quantity;
+
+      console.log(
+        `After Restoration: Product - ${product.name}, Stock: ${product.total_stock}`
       );
 
-      if (productSize) {
-        productSize.stock += item.quantity;
-
-        //Log the stock after restoration for debugging
-        console.log(
-          `After Restoration: ${productSize.size_name} - Stock: ${productSize.stock}`
-        );
-        await product.save();
-      }
+      await product.save();
     }
+
     order.status = "cancelled";
     await order.save();
+
     res.status(200).json({ message: "Order cancelled successfully", order });
   } catch (error) {
     console.error(error);
