@@ -27,12 +27,12 @@ const loginUser = async (userLogin) => {
 
     // Generate access and refresh tokens
     const access_token = await GenerateAccessToken({
-      id: checkUser._id,
+      userId: checkUser._id,
       isAdmin: checkUser.isAdmin,
     });
 
     const refresh_token = await GenerateRefreshToken({
-      id: checkUser._id,
+      userId: checkUser._id,
       email: checkUser.email,
       isAdmin: checkUser.isAdmin,
     });
