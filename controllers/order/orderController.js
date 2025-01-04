@@ -13,7 +13,7 @@ const createOrderFromCart = async (req, res) => {
 
     // Process each item in the cart
     const orderItems = cart.items.map((item) => {
-      const { price, total_stock, color } = item.productId;
+      const { price, total_stock, color, image_url } = item.productId; // Get the image_url here
       const normalizedColor = item.color.trim().toLowerCase();
 
       if (normalizedColor !== color.trim().toLowerCase()) {
@@ -34,6 +34,7 @@ const createOrderFromCart = async (req, res) => {
         color: item.color,
         price: price,
         total_stock,
+        image_url, // Add the image_url to the order item
       };
     });
 
@@ -99,21 +100,41 @@ const createOrderFromCart = async (req, res) => {
 
 const getOrdersByUserId = async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const { userId } = req.params; // Destructure for cleaner code
 
-    const orders = await Order.find({ userId }).populate("items.productId");
+    // Check if the userId is valid (you can add more validation if needed)
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
 
-    if (!orders || orders.length === 0)
+    // Retrieve orders for the user and populate productId field
+    const orders = await Order.find({ userId }).populate({
+      path: "items.productId", // Populate the productId in items array
+      select: "name price image_url", // Include the image_url field (adjust field name based on your model)
+    });
+
+    // If no orders are found for the user, return a 404 response
+    if (!orders.length) {
       return res.status(404).json({ message: "No orders found" });
+    }
 
-    res.status(200).json({ message: "Orders retrieved successfully", orders });
+    // Respond with the orders and a success message
+    return res.status(200).json({
+      message: "Orders retrieved successfully",
+      orders,
+    });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Failed to retrieve orders", error: error.message });
+    console.error("Error fetching orders:", error.message);
+
+    // If an error occurs, return a 500 status with the error message
+    return res.status(500).json({
+      message: "Failed to retrieve orders",
+      error: error.message,
+    });
   }
 };
+
+
 
 const cancelOrder = async (req, res) => {
   try {
