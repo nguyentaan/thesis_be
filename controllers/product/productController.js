@@ -15,18 +15,26 @@ const getProductById = async (req, res) => {
 };
 
 // Get All Products with Pagination
+// Get All Products with Pagination and Search
 const getAllProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Default to page 1
     const limit = parseInt(req.query.limit) || 20; // Default to 20 items per page
     const skip = (page - 1) * limit;
+    const searchQuery = req.query.search || ""; // Get the search term from query params
 
-    const products = await Product.find()
+    // Create the search filter
+    const searchFilter = searchQuery
+      ? { name: { $regex: searchQuery, $options: "i" } } // Case-insensitive search on the name field
+      : {};
+
+    // Fetch products with search and pagination
+    const products = await Product.find(searchFilter)
       .select("-reviews") // Exclude reviews array for performance optimization
       .skip(skip)
       .limit(limit);
 
-    const totalProducts = await Product.countDocuments();
+    const totalProducts = await Product.countDocuments(searchFilter); // Count with search filter
 
     res.json({
       products,
@@ -38,6 +46,7 @@ const getAllProducts = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Save Chunking Data
 const saveChunking = async (req, res) => {
