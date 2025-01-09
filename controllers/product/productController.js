@@ -1,16 +1,16 @@
 const Product = require("../../models/product");
 
-const getProductById = async (req,res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if(!product){
-            return res.status(404).json({message: "Product not found"});
-        }
-        res.json(product);
-    } catch (error) {
-        res.status(500).json({message: error.message});
+const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
-}
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 const getAllProduct = async (req, res) => {
   try {
@@ -21,8 +21,9 @@ const getAllProduct = async (req, res) => {
     // Calculate the number of documents to skip
     const skip = (page - 1) * limit;
 
-    // Fetch the products with pagination (no field is excluded)
+    // Fetch the products with pagination and exclude the "embedding" field
     const products = await Product.find()
+      .select("-embedding") // Exclude the "embedding" field
       .skip(skip) // Skip the documents for previous pages
       .limit(limit); // Limit the number of documents returned
 
@@ -40,8 +41,6 @@ const getAllProduct = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 module.exports = {
   getProductById,
