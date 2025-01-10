@@ -6,16 +6,14 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false, required: true },
   phone: { type: Number, default: 0 },
   avatar: { type: String, default: "" },
-  search_history: {
-    type: [String],
-    default: [],
-  },
-  order_lists: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "order",
-    default: [],
-  }, ],
-  
+  order_lists: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Orders", // Match the registered model name
+      default: [],
+    },
+  ],
 });
+
 const User = mongoose.model("User", userSchema);
 module.exports = User;

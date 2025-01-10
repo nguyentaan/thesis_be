@@ -7,7 +7,7 @@ const orderItemSchema = new mongoose.Schema({
     required: true,
   },
   quantity: { type: Number, default: 1, required: true },
-  size: { type: String, required: true },
+  color: { type: String, required: true },
   price: { type: Number, required: true }, // Capture price at the time of order
 });
 
@@ -27,4 +27,4 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Order", orderSchema);
+module.exports = mongoose.model("Orders", orderSchema);

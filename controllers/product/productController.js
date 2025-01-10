@@ -1,4 +1,5 @@
 const Product = require("../../models/product");
+const ProductService = require("../../services/product");
 
 const getProductById = async (req, res) => {
   try {
@@ -48,8 +49,41 @@ const getAllProduct = async (req, res) => {
   }
 };
 
+// Save Chunking Data
+const saveChunking = async (req, res) => {
+  try {
+    const {
+      chunking_list: chunkingList,
+      file_name: fileName,
+      file_type: fileType,
+    } = req.body;
+    if (!chunkingList || !fileName || !fileType) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const results = await ProductService.createFileAndChunkListProduct(
+      chunkingList,
+      fileName[0],
+      fileType
+    );
+
+    return res.status(200).json({
+      status: "success",
+      message: "Chunking data saved successfully",
+      data: results,
+    });
+  } catch (error) {
+    console.error("Error in saveChunking:", error);
+    console.error("Stack trace:", error.stack);
+    res.status(500).json({
+      status: "fail",
+      message: error.message,
+    });
+  }
+};
 
 module.exports = {
   getProductById,
-  getAllProduct,
+  getAllProducts,
+  saveChunking,
 };
