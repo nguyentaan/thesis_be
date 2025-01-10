@@ -1,7 +1,6 @@
 const Product = require("../../models/product");
 const ProductService = require("../../services/product");
 
-// Get Product by ID
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -14,39 +13,41 @@ const getProductById = async (req, res) => {
   }
 };
 
-// Get All Products with Pagination
-// Get All Products with Pagination and Search
-const getAllProducts = async (req, res) => {
+const getAllProduct = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // Default to page 1
-    const limit = parseInt(req.query.limit) || 20; // Default to 20 items per page
-    const skip = (page - 1) * limit;
-    const searchQuery = req.query.search || ""; // Get the search term from query params
+    // Extract page, limit, and search query from query parameters
+    const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
+    const limit = parseInt(req.query.limit) || 20; // Default to 20 if not provided
+    const search = req.query.search || ""; // Default to an empty string if not provided
 
-    // Create the search filter
-    const searchFilter = searchQuery
-      ? { name: { $regex: searchQuery, $options: "i" } } // Case-insensitive search on the name field
+    // Calculate the number of documents to skip
+    const skip = (page - 1) * limit;
+
+    // Build a search filter (case-insensitive)
+    const searchFilter = search
+      ? { name: { $regex: search, $options: "i" } } // Match name field with case-insensitive regex
       : {};
 
-    // Fetch products with search and pagination
-    const products = await Product.find(searchFilter)
-      .select("-reviews") // Exclude reviews array for performance optimization
-      .skip(skip)
-      .limit(limit);
+    // Fetch the products with pagination and exclude the "embedding" field
+    const products = await Product.find(searchFilter) // Apply the search filter
+      .select("-embedding") // Exclude the "embedding" field
+      .skip(skip) // Skip the documents for previous pages
+      .limit(limit); // Limit the number of documents returned
 
-    const totalProducts = await Product.countDocuments(searchFilter); // Count with search filter
+    // Count total products matching the search query
+    const totalProducts = await Product.countDocuments(searchFilter);
 
+    // Send the response
     res.json({
-      products,
-      total: totalProducts,
-      page,
-      limit,
+      products, // The current page products
+      total: totalProducts, // Total number of matching products
+      page, // Current page
+      limit, // Items per page
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // Save Chunking Data
 const saveChunking = async (req, res) => {
