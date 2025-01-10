@@ -14,26 +14,32 @@ const getProductById = async (req, res) => {
 
 const getAllProduct = async (req, res) => {
   try {
-    // Extract page and limit from query parameters
+    // Extract page, limit, and search query from query parameters
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
     const limit = parseInt(req.query.limit) || 20; // Default to 20 if not provided
+    const search = req.query.search || ""; // Default to an empty string if not provided
 
     // Calculate the number of documents to skip
     const skip = (page - 1) * limit;
 
+    // Build a search filter (case-insensitive)
+    const searchFilter = search
+      ? { name: { $regex: search, $options: "i" } } // Match name field with case-insensitive regex
+      : {};
+
     // Fetch the products with pagination and exclude the "embedding" field
-    const products = await Product.find()
+    const products = await Product.find(searchFilter) // Apply the search filter
       .select("-embedding") // Exclude the "embedding" field
       .skip(skip) // Skip the documents for previous pages
       .limit(limit); // Limit the number of documents returned
 
-    // Count total products to return with response (optional)
-    const totalProducts = await Product.countDocuments();
+    // Count total products matching the search query
+    const totalProducts = await Product.countDocuments(searchFilter);
 
     // Send the response
     res.json({
       products, // The current page products
-      total: totalProducts, // Total number of products
+      total: totalProducts, // Total number of matching products
       page, // Current page
       limit, // Items per page
     });
@@ -41,6 +47,7 @@ const getAllProduct = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 module.exports = {
   getProductById,
