@@ -6,10 +6,6 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false, required: true },
   phone: { type: Number, default: 0 },
   avatar: { type: String, default: "" },
-  search_history: {
-    type: [String],
-    default: [],
-  },
   order_lists: [
     {
       type: mongoose.Schema.Types.ObjectId,
