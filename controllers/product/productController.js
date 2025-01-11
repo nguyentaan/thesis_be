@@ -15,7 +15,6 @@ const getProductById = async (req, res) => {
 };
 
 // Get All Products with Pagination
-// Get All Products with Pagination and Search
 const getAllProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Default to page 1
