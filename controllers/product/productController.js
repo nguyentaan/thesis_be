@@ -13,7 +13,8 @@ const getProductById = async (req, res) => {
   }
 };
 
-const getAllProduct = async (req, res) => {
+// Get All Products with Pagination
+const getAllProducts = async (req, res) => {
   try {
     // Extract page, limit, and search query from query parameters
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
