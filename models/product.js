@@ -3,7 +3,6 @@ const { Schema, model } = mongoose;
 
 const productSchema = new Schema(
   {
-    _id: { type: mongoose.Schema.Types.ObjectId }, // Matches MongoDB's ObjectId format
     product_code: { type: String, required: false }, // Added for `product_code`
     product_id: { type: Number, required: true }, // Matches the `product_id` field
     name: { type: String, required: true }, // Product name
