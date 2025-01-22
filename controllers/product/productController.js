@@ -61,6 +61,9 @@ const saveChunking = async (req, res) => {
     if (!chunkingList || !fileName || !fileType) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+    console.log("chunkingList:", chunkingList);
+    console.log("fileName:", fileName);
+    console.log("fileType:", fileType);
 
     const results = await ProductService.createFileAndChunkListProduct(
       chunkingList,
