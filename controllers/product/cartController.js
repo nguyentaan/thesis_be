@@ -4,7 +4,7 @@ const Product = require("../../models/product");
 // Controller to add an item to the cart
 const addToCart = async (req, res) => {
   const { userId, productId, quantity, color } = req.body;
-
+  console.log("Adding to cart:", userId);
   try {
     // Fetch the product price from the product collection
     const product = await Product.findById(productId);

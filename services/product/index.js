@@ -3,10 +3,11 @@ const Product = require("../../models/product");
 
 const createFileAndChunkListProduct = async (chunks, file_name, file_type) => {
     try {
+        console.log("chunks: ", chunks);
+
         // Check if a file upload already exists
         const existingFileUpload = await FileUpload.findOne({ file_name, file_type });
         if (existingFileUpload) {
-            console.log("exist:....");
             const currentChunkIds = existingFileUpload.chunk_lists;
             const chunkingList = [];
             for (const chunk of chunks) {
@@ -26,18 +27,26 @@ const createFileAndChunkListProduct = async (chunks, file_name, file_type) => {
                     rating_count: chunk.rating_count || 0,
                     avg_rating: chunk.avg_rating || 0.0,
                 };
-                
+
                 // Check if the chunk already exists
-                let existingChunk = await Product.findOne({
-                    product_id: chunk.product_id,
-                });
+                let existingChunk = await Product.findOne({ product_id: chunk.product_id });
                 if (existingChunk) {
-                    // Update the existing chunk
-                    existingChunk = await Product.findByIdAndUpdate(
-                        existingChunk._id,
-                        { $set: chunkData },
-                        { new: true }
+                    // Check if the new data is different
+                    const isModified = Object.keys(chunkData).some(
+                        key => chunkData[key] !== existingChunk[key]
                     );
+
+                    if (isModified) {
+                        // Update the existing chunk if modified
+                        existingChunk = await Product.findByIdAndUpdate(
+                            existingChunk._id,
+                            { $set: chunkData },
+                            { new: true }
+                        );
+                        console.log(`Updated modified chunk: ${chunk.product_id}`);
+                    } else {
+                        console.log(`Unchanged chunk skipped: ${chunk.product_id}`);
+                    }
                 } else {
                     // Create a new chunk
                     existingChunk = await Product.create(chunkData);
@@ -50,6 +59,7 @@ const createFileAndChunkListProduct = async (chunks, file_name, file_type) => {
             if (chunksToRemove.length > 0) {
                 await Product.deleteMany({ _id: { $in: chunksToRemove } });
             }
+
             // Update the existing file upload
             existingFileUpload.chunk_lists = chunkingList;
             existingFileUpload.update_date = new Date();
@@ -80,20 +90,26 @@ const createFileAndChunkListProduct = async (chunks, file_name, file_type) => {
                     rating_count: chunk.rating_count || 0,
                     avg_rating: chunk.avg_rating || 0.0,
                 };
-                const existingChunk = await Product.findOne({
-                    product_id: chunk.product_id,
-                    product_code: chunk.product_code,
-                    index_name: chunk.index_name,
-                    name: chunk.name,
-                });
 
-                if (!existingChunk) {
+                const existingChunk = await Product.findOne({ product_id: chunk.product_id });
+                if (existingChunk) {
+                    // Check if the new data is different
+                    const isModified = Object.keys(chunkData).some(
+                        key => chunkData[key] !== existingChunk[key]
+                    );
+
+                    if (isModified) {
+                        await Product.findByIdAndUpdate(existingChunk._id, { $set: chunkData });
+                        console.log(`Updated modified chunk: ${chunk.product_id}`);
+                    } else {
+                        console.log(`Duplicate chunk skipped: ${chunk.product_id}`);
+                    }
+                } else {
                     const newChunk = await Product.create(chunkData);
                     createdChunks.push(newChunk);
-                } else {
-                    console.log(`Duplicate chunk skipped: ${chunk.product_id}`);
                 }
             }
+
             // Create a new file upload document
             const chunkIds = createdChunks.map(chunk => chunk._id);
             const newFileUpload = await FileUpload.create({
@@ -118,7 +134,6 @@ const createFileAndChunkListProduct = async (chunks, file_name, file_type) => {
         };
     }
 };
-
 module.exports = {
     createFileAndChunkListProduct,
 };
