@@ -25,9 +25,10 @@ const getAllProducts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     // Build a search filter (case-insensitive)
-    const searchFilter = search
-      ? { name: { $regex: search, $options: "i" } } // Match name field with case-insensitive regex
-      : {};
+    const searchFilter = {
+      ...search ? { name: { $regex: search, $options: "i" } } : {}, // Match name field with case-insensitive regex
+      image_url: { $ne: "https://example.com/default_image.png", $ne: "" }, // Exclude default and empty image URLs
+    };
 
     // Fetch the products with pagination and exclude the "embedding" field
     const products = await Product.find(searchFilter) // Apply the search filter
@@ -61,7 +62,6 @@ const saveChunking = async (req, res) => {
     if (!chunkingList || !fileName || !fileType) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
     const results = await ProductService.createFileAndChunkListProduct(
       chunkingList,
       fileName[0],
