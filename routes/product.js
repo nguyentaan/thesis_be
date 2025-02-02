@@ -8,11 +8,26 @@ const { authCheckToken } = require("../middleware/checkToken.js");
 // router.get("/", authCheckToken, productController.getAllProduct);
 router.get("/", productController.getAllProducts);
 
-router.get("/:id", authCheckToken, productController.getProductById);
+router.get("/:id", productController.getProductById);
 
 router.post(
     "/chunking",
     productController.saveChunking
+);
+
+router.post(
+    "/create",
+    productController.createProduct
+);
+
+router.post(
+    "/delete",
+    productController.deleteProductById
+);
+
+router.put(
+    "/update",
+    productController.updateProductById
 );
 
 module.exports = router;

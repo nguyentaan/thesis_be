@@ -134,6 +134,39 @@ const createFileAndChunkListProduct = async (chunks, file_name, file_type) => {
         };
     }
 };
+const generateProductId = async () => {
+    try {
+        const latestProduct = await Product.findOne().sort({ product_id: -1 });
+        if (latestProduct) {
+            return latestProduct.product_id + 1;
+        } else {
+            return 1;
+        }
+    } catch (error) {
+        console.error("Error in generateProductId:", error);
+        return null;
+    }
+}
+const generateProductCode = async () => {
+    try {
+        const latestProduct = await Product.findOne().sort({ product_id: -1 });
+
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, "0");
+        const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+        const year = String(now.getFullYear()).slice(-2); // Get last 2 digits of year
+
+        const newProductId = latestProduct ? latestProduct.product_id + 1 : 1;
+
+        return `P${newProductId}${day}${month}${year}`;
+    } catch (error) {
+        console.error("Error in generateProductCode:", error);
+        return null;
+    }
+};
+
 module.exports = {
     createFileAndChunkListProduct,
+    generateProductId,
+    generateProductCode,
 };
