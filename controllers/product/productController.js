@@ -98,9 +98,9 @@ const deleteProductById = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, category, color, description, total_stock, price, image_url } = req.body;
+    const { name, category, color, description, total_stock, price, image_url, index_name } = req.body;
 
-    if (!name || !category || !color || !description || !price || !image_url) {
+    if (!name || !category || !color || !description || !price || !image_url || !index_name) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -112,7 +112,6 @@ const createProduct = async (req, res) => {
     const product_code = await ProductService.generateProductCode();
     const product_id = await ProductService.generateProductId();
 
-    // Create the new product
     const product = new Product({
       product_code,
       product_id,
@@ -123,20 +122,18 @@ const createProduct = async (req, res) => {
       total_stock: stock,
       price,
       image_url,
+      index_name,
     });
 
     const newProduct = await product.save();
 
-    // Check if "Chưa phân loại" file upload exists
     let fileUpload = await FileUpload.findOne({ file_name: "Chưa phân loại" });
 
     if (fileUpload) {
-      // Append the new product_id to chunk_lists
       fileUpload.chunk_lists.push(newProduct._id);
       fileUpload.update_date = new Date();
       await fileUpload.save();
     } else {
-      // Create a new "Chưa phân loại" file upload with this product
       await FileUpload.create({
         file_name: "Chưa phân loại",
         file_type: "product",
@@ -212,6 +209,29 @@ const getAllCategories = async (req, res) => {
   }
 };
 
+const getAllUniqueIndexName = async (req, res) => {
+  try {
+    const indexNames = await Product.find().distinct("index_name");
+    if (!indexNames || indexNames.length === 0) {
+      return res.status(404).json({ message: "No index_name found." });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Index names retrieved successfully.",
+      index_names: indexNames.sort(), // Ensure alphabetical order
+    });
+  } catch (error) {
+    console.error("Error fetching index names:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal server error. Could not retrieve index names.",
+      error: error.message,
+    });
+  }
+};
+
+
 const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params; // Extract category from URL params
@@ -274,4 +294,5 @@ module.exports = {
   updateProductById,
   getAllCategories,
   getProductsByCategory,
+  getAllUniqueIndexName,
 };

@@ -9,6 +9,7 @@ const { authCheckToken } = require("../middleware/checkToken.js");
 router.get("/", productController.getAllProducts);
 router.get("/:id", productController.getProductById);
 router.get("/category", productController.getAllCategories);
+router.get("/index_name/getAll", productController.getAllUniqueIndexName);
 router.get("/category/:category", productController.getProductsByCategory);
 router.post(
     "/chunking",
