@@ -1,6 +1,6 @@
 const Product = require("../../models/product");
 const ProductService = require("../../services/product");
-
+const FileUpload = require("../../models/upload_file");
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -79,6 +79,111 @@ const saveChunking = async (req, res) => {
     res.status(500).json({
       status: "fail",
       message: error.message,
+    });
+  }
+};
+
+const deleteProductById = async (req, res) => {
+  try {
+    const product_id = await Product.deleteOne(req.body.product_id);
+    if (product_id) {
+      res.status(200).json({ message: "Product deleted successfully" });
+    } else {
+      res.status(404).json({ message: "Product not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const createProduct = async (req, res) => {
+  try {
+    const { name, category, color, description, total_stock, price, image_url } = req.body;
+
+    if (!name || !category || !color || !description || !price || !image_url) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    let stock = Number(total_stock);
+    if (isNaN(stock) || stock < 0) {
+      stock = 0;
+    }
+
+    const product_code = await ProductService.generateProductCode();
+    const product_id = await ProductService.generateProductId();
+
+    // Create the new product
+    const product = new Product({
+      product_code,
+      product_id,
+      name,
+      category,
+      color,
+      description,
+      total_stock: stock,
+      price,
+      image_url,
+    });
+
+    const newProduct = await product.save();
+
+    // Check if "Chưa phân loại" file upload exists
+    let fileUpload = await FileUpload.findOne({ file_name: "Chưa phân loại" });
+
+    if (fileUpload) {
+      // Append the new product_id to chunk_lists
+      fileUpload.chunk_lists.push(newProduct._id);
+      fileUpload.update_date = new Date();
+      await fileUpload.save();
+    } else {
+      // Create a new "Chưa phân loại" file upload with this product
+      await FileUpload.create({
+        file_name: "Chưa phân loại",
+        file_type: "product",
+        create_date: new Date(),
+        update_date: new Date(),
+        chunk_lists: [newProduct._id],
+      });
+    }
+
+    res.status(200).json(newProduct);
+  } catch (error) {
+    console.error("Error in createProduct:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+
+const updateProductById = async (req, res) => {
+  try {
+    const { product_id, update_data } = req.body;
+    console.log("update_data", update_data);
+    let product = await Product.findById(product_id);
+    if (!product) {
+      return res.status(404).json({
+        status: "ERR",
+        message: "Product not found",
+      });
+    }
+    if (update_data) {
+      Object.keys(update_data).forEach((key) => {
+        if (update_data[key] !== null && update_data[key] !== "") {
+          product[key] = update_data[key];
+        }
+      });
+      await product.save();
+    }
+    return res.status(200).json({
+      status: "OK",
+      message: "Product information updated successfully",
+      data: product,
+    });
+  } catch (e) {
+    console.error("Error updating product profile:", e);
+    return res.status(500).json({
+      status: "ERR",
+      message: "An error occurred while updating the product profile",
+      details: e.message,
     });
   }
 };
@@ -164,6 +269,9 @@ module.exports = {
   getProductById,
   getAllProducts,
   saveChunking,
+  deleteProductById,
+  createProduct,
+  updateProductById,
   getAllCategories,
   getProductsByCategory,
 };

@@ -165,7 +165,8 @@ const ClearAllSearchHistory = async (req, res) => {
 const UpdateUserProfile = async (req, res) => {
   try {
     const { user_id, update_data } = req.body;
-
+    console.log("user_id", user_id);
+    console.log("update_data", update_data);
     let user = await User.findById(user_id);
     if (!user) {
       return res.status(404).json({
@@ -181,13 +182,12 @@ const UpdateUserProfile = async (req, res) => {
           user[key] = update_data[key];
         }
       });
-      
+  
       // Save the updated user profile
       await user.save();
     }
 
-    console.log("User updated", user);
-
+    console.log("User profile updated successfully", user);
     return res.status(200).json({
       status: "OK",
       message: "User profile updated successfully",

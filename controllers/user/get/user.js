@@ -2,11 +2,6 @@ const User = require("../../../models/user"); // Assuming the User model is impo
 
 const getAllUser = async (req, res) => {
   try {
-    // if (orderListLength !== undefined) {
-    //   filter["$order_lists"] = { $gte: [{ $size: "$order_lists" }, orderListLength] }; 
-    // }
-
-    // Query the database with the constructed filter
     const users = await User.find()
       .select("-password") // Exclude password from the result
       .populate("order_lists"); // Populate order_lists if they reference another model
@@ -23,6 +18,34 @@ const getAllUser = async (req, res) => {
   }
 };
 
+const getOneUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id)
+      .select("-password")
+      .populate("order_lists");
+    
+    if (!user) {
+      return res.status(404).json({
+        status: "ERROR",
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      status: "SUCCESS",
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "ERROR",
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllUser,
+  getOneUser,
 };
