@@ -26,7 +26,7 @@ const getAllProducts = async (req, res) => {
 
     // Build a search filter (case-insensitive)
     const searchFilter = {
-      ...search ? { name: { $regex: search, $options: "i" } } : {}, // Match name field with case-insensitive regex
+      ...(search ? { name: { $regex: search, $options: "i" } } : {}), // Match name field with case-insensitive regex
       image_url: { $ne: "https://example.com/default_image.png", $ne: "" }, // Exclude default and empty image URLs
     };
 
@@ -188,6 +188,82 @@ const updateProductById = async (req, res) => {
   }
 };
 
+const getAllCategories = async (req, res) => {
+  try {
+    console.log("Fetching all product categories...");
+
+    const categories = await Product.distinct("category");
+
+    if (!categories || categories.length === 0) {
+      return res.status(404).json({ message: "No categories found." });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Categories retrieved successfully.",
+      categories: categories.sort(), // Ensures alphabetical order
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal server error. Could not retrieve categories.",
+    });
+  }
+};
+
+const getProductsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params; // Extract category from URL params
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit) || 20; // Default to 20 products per page
+    const search = req.query.search || ""; // Optional search query
+
+    if (!category) {
+      return res.status(400).json({ message: "Category is required." });
+    }
+
+    // Build filter query
+    const filter = {
+      category: category, // Match the given category
+      ...(search ? { name: { $regex: search, $options: "i" } } : {}), // Optional name search (case-insensitive)
+    };
+
+    // Pagination calculations
+    const skip = (page - 1) * limit;
+
+    // Fetch products based on filter, excluding "embedding"
+    const products = await Product.find(filter)
+      .select("-embedding")
+      .skip(skip)
+      .limit(limit);
+
+    // Count total products in category
+    const totalProducts = await Product.countDocuments(filter);
+
+    if (!products.length) {
+      return res
+        .status(404)
+        .json({ message: "No products found for this category." });
+    }
+
+    res.status(200).json({
+      status: "success",
+      message: "Products retrieved successfully.",
+      category,
+      total: totalProducts,
+      page,
+      limit,
+      products,
+    });
+  } catch (error) {
+    console.error("Error fetching products by category:", error);
+    res.status(500).json({
+      status: "fail",
+      message: "Internal server error. Could not fetch products.",
+    });
+  }
+};
 
 module.exports = {
   getProductById,
@@ -196,4 +272,6 @@ module.exports = {
   deleteProductById,
   createProduct,
   updateProductById,
+  getAllCategories,
+  getProductsByCategory,
 };
