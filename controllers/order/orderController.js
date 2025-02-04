@@ -134,6 +134,34 @@ const getOrdersByUserId = async (req, res) => {
   }
 };
 
+const getAllOrders = async (req, res) => {
+  try {
+    // Retrieve orders for the user and populate productId field
+    const orders = await Order.find().populate({
+      path: "items.productId", // Populate the productId in items array
+      select: "name price image_url", // Include the image_url field (adjust field name based on your model)
+    });
+
+    // If no orders are found for the user, return a 404 response
+    if (!orders.length) {
+      return res.status(404).json({ message: "No orders found" });
+    }
+
+    // Respond with the orders and a success message
+    return res.status(200).json({
+      message: "Orders retrieved successfully",
+      orders,
+    });
+  } catch (error) {
+    console.error("Error fetching orders:", error.message);
+
+    // If an error occurs, return a 500 status with the error message
+    return res.status(500).json({
+      message: "Failed to retrieve orders",
+      error: error.message,
+    });
+  }
+};
 
 
 const cancelOrder = async (req, res) => {
@@ -183,4 +211,4 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrderFromCart, getOrdersByUserId, cancelOrder };
+module.exports = { createOrderFromCart, getOrdersByUserId, cancelOrder, getAllOrders };
