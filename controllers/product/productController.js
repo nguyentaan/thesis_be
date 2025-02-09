@@ -1,6 +1,7 @@
 const Product = require("../../models/product");
 const ProductService = require("../../services/product");
 const FileUpload = require("../../models/upload_file");
+
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -98,9 +99,26 @@ const deleteProductById = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { name, category, color, description, total_stock, price, image_url, index_name } = req.body;
+    const {
+      name,
+      category,
+      color,
+      description,
+      total_stock,
+      price,
+      image_url,
+      index_name,
+    } = req.body;
 
-    if (!name || !category || !color || !description || !price || !image_url || !index_name) {
+    if (
+      !name ||
+      !category ||
+      !color ||
+      !description ||
+      !price ||
+      !image_url ||
+      !index_name
+    ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -146,10 +164,11 @@ const createProduct = async (req, res) => {
     res.status(200).json(newProduct);
   } catch (error) {
     console.error("Error in createProduct:", error);
-    res.status(500).json({ message: "Internal server error", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
-
 
 const updateProductById = async (req, res) => {
   try {
@@ -230,7 +249,6 @@ const getAllUniqueIndexName = async (req, res) => {
     });
   }
 };
-
 
 const getProductsByCategory = async (req, res) => {
   try {
